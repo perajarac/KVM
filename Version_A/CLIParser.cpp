@@ -1,5 +1,10 @@
 #include "CLIParser.hpp"
 
+int CLIParser::memory_size = 0;
+int CLIParser::page_size = 0;
+vector<string> CLIParser::guests;
+vector<string> CLIParser::files;
+
 
 void CLIParser::parseA(int argc, char* argv[]){
     if(argc < 2){
@@ -57,10 +62,10 @@ void CLIParser::parseC(int argc, char* argv[]){
 }
 
 void CLIParser::print(){
-    cout << "Memory size: " << memory_size << "MB\n";
-    cout << "Page size" << page_size;
-    if(page_size == 0x1000) cout << "KB\n";
-    else cout << "MB\n";
+    cout << "Memory size: " << memory_size << " B\n";
+    cout << "Page size: " << page_size;
+    if(page_size == 0x1000) cout << " B\n";
+    else cout << " B\n";
     for(auto mem : guests){
         cout << mem << endl;
     }

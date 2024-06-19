@@ -5,16 +5,16 @@ CFLAGS = -Wall -g
 CXXFLAGS = -Wall -g
 
 # Targets
-all: mini_hypervisor MyClassWrapper
+all: mini_hypervisor
 
-mini_hypervisor: mini_hypervisor.c
-	$(CC) $(CFLAGS) mini_hypervisor.c -o mini_hypervisor
+mini_hypervisor: mini_hypervisor.o CLIParser.o
+	$(CXX) $(CXXFLAGS) mini_hypervisor.o CLIParser.o -o mini_hypervisor -lstdc++
 
-MyClassWrapper: MyClassWrapper.o
-	$(CXX) $(CXXFLAGS) MyClassWrapper.o -o MyClassWrapper
+mini_hypervisor.o: mini_hypervisor.cpp
+	$(CXX) $(CXXFLAGS) -c mini_hypervisor.cpp -o mini_hypervisor.o
 
-MyClassWrapper.o: MyClassWrapper.cpp
-	$(CXX) $(CXXFLAGS) -c MyClassWrapper.cpp -o MyClassWrapper.o
+CLIParser.o: CLIParser.cpp
+	$(CXX) $(CXXFLAGS) -c CLIParser.cpp -o CLIParser.o
 
 clean:
-	rm -f mini_hypervisor MyClassWrapper MyClassWrapper.o
+	rm -f mini_hypervisor mini_hypervisor.o CLIParser.o
