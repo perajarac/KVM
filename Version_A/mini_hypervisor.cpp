@@ -1,9 +1,7 @@
-#include <stdio.h>
-#include "CLIParser.hpp"
+#define _GNU_SOURCE
+
 
 int main(int argc, char* argv[])
-{
-    CLIParser::parseA(argc,argv);
-    CLIParser::print();
+{   
     return 0;
 }
