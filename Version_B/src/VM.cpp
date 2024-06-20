@@ -1,4 +1,4 @@
-#include "VM.hpp"
+#include "../h/VM.hpp"
 
 VM::VM(int argc, char* argv[]){
     initCLI(argc,argv);
@@ -113,26 +113,122 @@ void VM::setup_long_mode()
 
 	// 4KB page size
 	// -----------------------------------------------------
-	pd[0] = PDE64_PRESENT | PDE64_RW | PDE64_USER | pt_addr;
-	// PC vrednost se mapira na ovu stranicu.
-	pt[0] = page | PDE64_PRESENT | PDE64_RW | PDE64_USER;
-	// SP vrednost se mapira na ovu stranicu. Vrednost 0x6000 je proizvoljno tu postavljena.
-	pt[511] = 0x6000 | PDE64_PRESENT | PDE64_RW | PDE64_USER; 
+    if(this->pg_size == 2 * 1024 * 1024){
 
-	// FOR petlja služi tome da mapiramo celu memoriju sa stranicama 4KB.
-	// Zašti je uslov i < 512? Odgovor: jer je memorija veličine 2MB.
-	// for(int i = 0; i < 512; i++) {
-	// 	pt[i] = page | PDE64_PRESENT | PDE64_RW | PDE64_USER;
-	// 	page += 0x1000;
-	// }
-	// -----------------------------------------------------
+        uint64_t num_entries = mem_size / (2 * 1024 * 1024); // Calculate the number of entries based on mem_size
+        for (int i = 0; i < num_entries && i < 4; i++) {
+            pd[i] = PDE64_PRESENT | PDE64_RW | PDE64_USER | PDE64_PS | page;
+            page += 0x200000;
+        }
+
+    } else if(this->pg_size == 4 * 1024){
+
+
+        uint64_t number_of_2mbs = mem_size / (2 * 1024 * 1024);
+
+        for(uint64_t i = 0; i < number_of_2mbs; ++i) {
+
+            if(i != 0) {
+                pt_addr += 0x1000;
+                pt = (uint64_t *)(this->mem + pt_addr);
+            }
+
+            pd[i] = PDE64_PRESENT | PDE64_RW | PDE64_USER | pt_addr;
+            for(int j = 0; j < 512; ++j) {
+                pt[j] = page | PDE64_PRESENT | PDE64_RW | PDE64_USER;
+                page += 0x1000;
+		    }
+
+        }
+    }
 
     // Registar koji ukazuje na PML4 tabelu stranica. Odavde kreće mapiranje VA u PA.
-	this->sregs.cr3  = pml4_addr; 
-	this->sregs.cr4  = CR4_PAE; // "Physical Address Extension" mora biti 1 za long mode.
-	this->sregs.cr0  = CR0_PE | CR0_PG; // Postavljanje "Protected Mode" i "Paging" 
-	this->sregs.efer = EFER_LME | EFER_LMA; // Postavljanje  "Long Mode Active" i "Long Mode Enable"
+	sregs.cr3  = pml4_addr; 
+	sregs.cr4  = CR4_PAE; // "Physical Address Extension" mora biti 1 za long mode.
+	sregs.cr0  = CR0_PE | CR0_PG; // Postavljanje "Protected Mode" i "Paging" 
+	sregs.efer = EFER_LME | EFER_LMA; // Postavljanje  "Long Mode Active" i "Long Mode Enable"
 
 	// Inicijalizacija segmenata procesora.
 	setup_64bit_code_segment(&this->sregs);
+}
+
+int VM::start_vm(VM vm, int i){
+	int stop = 0;
+	int ret = 0;
+	FILE* img;
+
+	if (vm.init_vm()) {
+		printf("Failed to init the VM\n");
+		return -1;
+	}
+
+	if (ioctl(vm.vcpu_fd, KVM_GET_SREGS, &vm.sregs) < 0) {
+		perror("KVM_GET_SREGS");
+		return -1;
+	}
+
+	vm.setup_long_mode();
+
+    if (ioctl(vm.vcpu_fd, KVM_SET_SREGS, &vm.sregs) < 0) {
+		perror("KVM_SET_SREGS");
+		return -1;
+	}
+
+	memset(&vm.regs, 0, sizeof(vm.regs));
+	vm.regs.rflags = 2;
+	vm.regs.rip = 0;
+	// SP raste nadole
+	vm.regs.rsp = 2 << 20;
+
+	if (ioctl(vm.vcpu_fd, KVM_SET_REGS, &vm.regs) < 0) {
+		perror("KVM_SET_REGS");
+		return -1;
+	}
+
+	img = fopen(vm.guests[i].c_str(), "r");
+	if (img == NULL) {
+		printf("Can not open binary file\n");
+		return -1;
+	}
+
+	char *p = vm.mem;
+  	while(feof(img) == 0) {
+    	int r = fread(p, 1, 1024, img);
+    	p += r;
+  	}
+  	fclose(img);
+
+	while(stop == 0) {
+		ret = ioctl(vm.vcpu_fd, KVM_RUN, 0);
+		if (ret == -1) {
+		printf("KVM_RUN failed\n");
+		return 1;
+		}
+
+		switch (vm.krn->exit_reason) {
+			case KVM_EXIT_IO:
+				if (vm.krn->io.direction == KVM_EXIT_IO_OUT && vm.krn->io.port == 0xE9) {
+					char *p = (char *)vm.krn;
+					printf("%c", *(p + vm.krn->io.data_offset));
+				}
+				continue;
+			case KVM_EXIT_HLT:
+				printf("KVM_EXIT_HLT\n");
+				stop = 1;
+				break;
+			case KVM_EXIT_INTERNAL_ERROR:
+				printf("Internal error: suberror = 0x%x\n", vm.krn->internal.suberror);
+				stop = 1;
+				break;
+			case KVM_EXIT_SHUTDOWN:
+				printf("Shutdown\n");
+				stop = 1;
+				break;
+			default:
+				printf("Exit reason: %d\n", vm.krn->exit_reason);
+				break;
+    	}
+  	}
+
+    return 0;
 }

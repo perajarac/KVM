@@ -1,20 +1,24 @@
-# Variables
-CC = gcc
-CXX = g++
-CFLAGS = -Wall -g
-CXXFLAGS = -Wall -g
+CC = gcc 
+GG = g++ -std=c++17
 
-# Targets
-all: mini_hypervisor
+SRC_FILES = $(wildcard ./src/*.cpp)
+GST_FILES = $(wildcard ./guest/*.c)
+OBJ_FILES = $(patsubst ./guest/%.c, ./guest/%.o, $(GST_FILES))
+IMG_FILES = $(patsubst ./guest/%.c, %.img, $(GST_FILES))
 
-mini_hypervisor: mini_hypervisor.o CLIParser.o
-	$(CXX) $(CXXFLAGS) mini_hypervisor.o CLIParser.o -o mini_hypervisor -lstdc++
+CFLAGS = -Iinc -I.
 
-mini_hypervisor.o: mini_hypervisor.cpp
-	$(CXX) $(CXXFLAGS) -c mini_hypervisor.cpp -o mini_hypervisor.o
+all: mini_hypervisor $(IMG_FILES)
 
-CLIParser.o: CLIParser.cpp
-	$(CXX) $(CXXFLAGS) -c CLIParser.cpp -o CLIParser.o
+mini_hypervisor: $(SRC_FILES)
+	$(GG) $(CFLAGS) $^ -o $@
+
+%.img: guest/%.o
+	ld -T guest/guest.ld $< -o $@
+
+guest/%.o: guest/%.c
+	$(CC) -m64 -ffreestanding -fno-pic -c -o $@ $<
 
 clean:
-	rm -f mini_hypervisor mini_hypervisor.o CLIParser.o
+	rm -f $(OBJ_FILES) $(IMG_FILES)
+	rm -f mini_hypervisor

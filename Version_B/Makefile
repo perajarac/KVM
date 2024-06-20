@@ -1,5 +1,24 @@
-mini_hypervisor: mini_hypervisor.c
-	gcc mini_hypervisor.c -o mini_hypervisor
+CC = gcc 
+CXX = g++ -std=c++17
+
+SRC_FILES = $(wildcard ./src/*.cpp)
+GST_FILES = $(wildcard ./guest/*.c)
+OBJ_FILES = $(patsubst ./guest/%.c, ./guest/%.o, $(GST_FILES))
+IMG_FILES = $(patsubst ./guest/%.c, %.img, $(GST_FILES))
+
+CFLAGS = -Iinc -I.
+
+all: mini_hypervisor $(IMG_FILES)
+
+mini_hypervisor: $(SRC_FILES)
+	$(CXX) $(CFLAGS) -lpthread $^ -o $@
+
+%.img: guest/%.o
+	ld -T guest/guest.ld $< -o $@
+
+guest/%.o: guest/%.c
+	$(CC) -m64 -ffreestanding -fno-pic -c -o $@ $<
 
 clean:
+	rm -f $(OBJ_FILES) $(IMG_FILES)
 	rm -f mini_hypervisor

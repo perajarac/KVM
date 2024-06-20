@@ -1,4 +1,4 @@
-#include "CLIParser.hpp"
+#include "../h/CLIParser.hpp"
 
 int CLIParser::memory_size = 0;
 int CLIParser::page_size = 0;
@@ -48,16 +48,28 @@ void CLIParser::parseA(int argc, char* argv[]){
     
 }
 
-void CLIParser::parseB(int argc, char* argv[]){
+int CLIParser::parseB(int argc, char* argv[]){
 
     parseA(argc,argv);
-    for(int i = 7; i<argc; i++){
+    int i = 7;
+    for(;i<argc; i++){
+        if(strcmp("-f", argv[i]) == 0 || strcmp("--file", argv[i]) == 0){
+            break;
+        }
         guests.push_back(argv[i]);
     }
+
+    return i;
     
 }
 
 void CLIParser::parseC(int argc, char* argv[]){
+
+    int i = parseB(argc,argv);
+
+    for(i = i + 1;i<argc;i++){
+        files.push_back(argv[i]);
+    }
     
 }
 

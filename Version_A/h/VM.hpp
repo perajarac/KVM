@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <linux/kvm.h>
 #include <vector>
-#include "CLIParser.hpp"
+#include "../h/CLIParser.hpp"
 
 #define PDE64_PRESENT 1
 #define PDE64_RW (1U << 1)
@@ -46,6 +46,8 @@ public:
     void setup_long_mode();
 
     void setup_64bit_code_segment(kvm_sregs *sregs);
+
+    static int start_vm(int argc, char* argv[]);
 
 
 

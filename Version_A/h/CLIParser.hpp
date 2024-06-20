@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iostream>
+#include <string.h>
 using namespace std;
 
 class CLIParser{
@@ -10,7 +11,7 @@ class CLIParser{
 public:
 
     static void parseA(int argc, char* argv[]);
-    static void parseB(int argc, char* argv[]);
+    static int parseB(int argc, char* argv[]);
     static void parseC(int argc, char* argv[]);
 
     static void print();
