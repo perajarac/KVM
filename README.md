@@ -1,4 +1,4 @@
-# Architecure and organization of computer - project task
+# Computer Organization and Architecture - VIRTUALIZATION PROJECT
 
 ## Building
 With *cd* position yourself in Version_*x* folder. Write *make* in terminal.
