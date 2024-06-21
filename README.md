@@ -31,14 +31,14 @@ Ensure the following basic features of the hypervisor:
 ### Level B
 Extend version A of the hypervisor by adding functionality to run multiple virtual machines. For the implementation of this version of the hypervisor, it is necessary to use Portable Operating System Interface (POSIX) threads. Ensure:
 
--The number of VMs to be run is specified via the hypervisor option -g (--guest), by specifying a series of files representing the guest executable code. For each file, a VM needs to be started.
--For each VM, a POSIX thread needs to be started to ensure the successful execution of the guest code.
+- The number of VMs to be run is specified via the hypervisor option -g (--guest), by specifying a series of files representing the guest executable code. For each file, a VM needs to be started.
+- For each VM, a POSIX thread needs to be started to ensure the successful execution of the guest code.
 
-An example call is shown below:
-
-```
-./mini_hypervisor --memory 4 --page 2 --guest guest1.img guest2.img
-```
+  An example call is shown below:
+  
+  ```
+  ./mini_hypervisor --memory 4 --page 2 --guest guest1.img guest2.img
+  ```
 
 ### Level C
 
