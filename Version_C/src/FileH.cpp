@@ -5,12 +5,12 @@
 map<string, FILE*> FileH::shared_files =  map<string, FILE*>();
 
 uint64_t FileH::next_file_id = 0;
-std::map<uint64_t, std::string> FileH::shared_files_vm_ids =  std::map<uint64_t, std::string>();
+map<uint64_t, string> FileH::shared_files_vm_ids =  map<uint64_t, string>();
 
-std::map<uint64_t, std::map<std::string, uint64_t>> FileH::shared_files_cursors = std::map<uint64_t, std::map<std::string, uint64_t>>();
+map<uint64_t, map<string, uint64_t>> FileH::shared_files_cursors = map<uint64_t, map<string, uint64_t>>();
 
 
-void FileH::open_shared_files(std::vector<std::string> file_names) {
+void FileH::open_shared_files(vector<string> file_names) {
 
     for(auto &file : file_names) {
 
@@ -24,7 +24,7 @@ void FileH::open_shared_files(std::vector<std::string> file_names) {
 
 }
 
-void FileH::close_shared_files(std::vector<std::string> file_names) {
+void FileH::close_shared_files(vector<string> file_names) {
 
     for(auto& file_pair : FileH::shared_files) {
 
@@ -38,10 +38,10 @@ void FileH::close_shared_files(std::vector<std::string> file_names) {
 
 void FileH::setup_shared_cursors(uint64_t vm_id) {
 
-    std::map<std::string, uint64_t> t_map;
+    map<string, uint64_t> t_map;
 
     for(auto file : FileH::shared_files) {
-        std::string file_name = file.first;
+        string file_name = file.first;
 
         t_map[file_name] = 0;
     }
@@ -73,7 +73,7 @@ uint64_t FileH::get_operation() {
     return op_code;
 }
 
-uint64_t FileH::string_to_uint64(const std::string& str) {
+uint64_t FileH::string_to_uint64(const string& str) {
     uint64_t result = 0;
     for (auto const& num : str)
     {
@@ -85,14 +85,14 @@ uint64_t FileH::string_to_uint64(const std::string& str) {
     return result;
 }
 
-std::string FileH::uint64_to_string(uint64_t value) {
-    std::ostringstream oss;
+string FileH::uint64_to_string(uint64_t value) {
+    stringstream oss;
     oss << value;
     return oss.str();
 }
 
-std::string FileH::invert_string(std::string to_invert) {
-    std::string ret;
+string FileH::invert_string(string to_invert) {
+    string ret;
     for(int64_t i = to_invert.size() - 2; i>=0; i--) {
         ret += to_invert[i];
     }
@@ -105,16 +105,15 @@ uint64_t FileH::file_open(uint64_t vm_id) {
     size_t second_hash = msg_buffer.find('#', first_hash + 1);
     size_t third_hash = msg_buffer.find('#', second_hash + 1);
 
-    if (first_hash != std::string::npos && second_hash != std::string::npos && third_hash != std::string::npos) {
+    if (first_hash != string::npos && second_hash != string::npos && third_hash != string::npos) {
 
-        std::string _file_name = msg_buffer.substr(first_hash + 1, second_hash - first_hash - 1);
-        std::string _permisions = msg_buffer.substr(second_hash + 1, third_hash - second_hash - 1);
+        string _file_name = msg_buffer.substr(first_hash + 1, second_hash - first_hash - 1);
+        string _permisions = msg_buffer.substr(second_hash + 1, third_hash - second_hash - 1);
 
         msg_buffer = "";
 
-        std::string file_name = uint64_to_string(vm_id) + _file_name;
+        string file_name = _file_name + uint64_to_string(vm_id);
         if(check_if_local(_file_name)) {
-            // If it already exists return it
 
             uint64_t id = 0;
             for(auto e : local_files_vm_ids) {
@@ -141,8 +140,6 @@ uint64_t FileH::file_open(uint64_t vm_id) {
 
         }
 
-        // If it doenst exist create it
-
         file_name = uint64_to_string(vm_id) + _file_name;
 
         FILE* ptr = fopen(file_name.c_str(), "w+");
@@ -162,15 +159,15 @@ uint64_t FileH::file_open(uint64_t vm_id) {
 
 }
 
-std::string FileH::file_read(uint64_t vm_id) {
+string FileH::file_read(uint64_t vm_id) {
 
     size_t first_hash = msg_buffer.find('#');
     size_t second_hash = msg_buffer.find('#', first_hash + 1);
     size_t third_hash = msg_buffer.find('#', second_hash + 1);
 
-    if (first_hash != std::string::npos && second_hash != std::string::npos && third_hash != std::string::npos) {
-        std::string _file_id = msg_buffer.substr(first_hash + 1, second_hash - first_hash - 1);
-        std::string _data_size = msg_buffer.substr(second_hash + 1, third_hash - second_hash - 1);
+    if (first_hash != string::npos && second_hash != string::npos && third_hash != string::npos) {
+        string _file_id = msg_buffer.substr(first_hash + 1, second_hash - first_hash - 1);
+        string _data_size = msg_buffer.substr(second_hash + 1, third_hash - second_hash - 1);
 
         msg_buffer = "";
 
@@ -187,7 +184,7 @@ std::string FileH::file_read(uint64_t vm_id) {
             fseek(get_local_id(file_id), 0, SEEK_SET);
             uint64_t _size = fread(&buffer, sizeof(char), data_size , get_local_id(file_id));
 
-            std::string send_it;
+           string send_it;
             for(int i = 0; i < _size; i++) {
                 send_it += buffer[i];
             }
@@ -205,7 +202,7 @@ std::string FileH::file_read(uint64_t vm_id) {
 
             cursors[FileH::shared_files_vm_ids[file_id]] += _size;
 
-            std::string send_it;
+            string send_it;
             for(int i = 0; i < _size; i++) {
                 send_it += buffer[i];
             }
@@ -230,10 +227,10 @@ void FileH::file_write(uint64_t vm_id) {
     size_t second_hash = msg_buffer.find('#', first_hash + 1);
     size_t third_hash = msg_buffer.find('#', second_hash + 1);
 
-    if (first_hash != std::string::npos && second_hash != std::string::npos && third_hash != std::string::npos) {
+    if (first_hash != std::string::npos && second_hash != string::npos && third_hash != std::string::npos) {
 
-        std::string _file_id = msg_buffer.substr(first_hash + 1, second_hash - first_hash - 1);
-        std::string data = msg_buffer.substr(second_hash + 1, third_hash - second_hash - 1);
+        string _file_id = msg_buffer.substr(first_hash + 1, second_hash - first_hash - 1);
+        string data = msg_buffer.substr(second_hash + 1, third_hash - second_hash - 1);
 
         msg_buffer = "";
 
@@ -253,7 +250,7 @@ void FileH::file_write(uint64_t vm_id) {
 
             FILE* old_file = get_shared_id(file_id);
 
-            std::string _file_name;
+            string _file_name;
 
             for(auto e : shared_files) {
                 if(e.second == old_file) {
@@ -262,7 +259,7 @@ void FileH::file_write(uint64_t vm_id) {
                 }
             }
 
-            std::string file_name = uint64_to_string(vm_id) + _file_name;
+            string file_name = _file_name + uint64_to_string(vm_id);
             
             FILE* new_file = fopen(file_name.c_str(), "w+");
 
@@ -301,8 +298,8 @@ void FileH::file_close(uint64_t vm_id) {
     size_t second_hash = msg_buffer.find('#', first_hash + 1);
     size_t third_hash = msg_buffer.find('#', second_hash + 1);
 
-    if (first_hash != std::string::npos && second_hash != std::string::npos && third_hash != std::string::npos) {
-        std::string file_id = msg_buffer.substr(first_hash + 1, second_hash - first_hash - 1);
+    if (first_hash != string::npos && second_hash != string::npos && third_hash != string::npos) {
+        string file_id = msg_buffer.substr(first_hash + 1, second_hash - first_hash - 1);
 
         msg_buffer = "";
 
@@ -332,7 +329,7 @@ bool FileH::check_if_shared(uint64_t file_id) {
     return false;
 }
 
-bool FileH::check_if_shared(std::string file_name) {
+bool FileH::check_if_shared(string file_name) {
 
     auto it = FileH::shared_files.find(file_name);
 
@@ -357,7 +354,7 @@ bool FileH::check_if_local(uint64_t file_id) {
     return false;
 }
 
-bool FileH::check_if_local(std::string file_name) {
+bool FileH::check_if_local(string file_name) {
     auto it = FileH::local_files.find(file_name);
     if(it != FileH::local_files.end()) {
         return true;

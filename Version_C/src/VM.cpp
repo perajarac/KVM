@@ -217,13 +217,13 @@ int VM::start_vm(VM vm, int i){
 				p = (char*)vm.krn + vm.krn->io.data_offset;
 
 				if (vm.krn->io.direction == KVM_EXIT_IO_OUT && vm.krn->io.port == 0xE9) {
-					std::cout << *p;
+					cout << *p;
 				} else if (vm.krn->io.direction == KVM_EXIT_IO_IN && vm.krn->io.port == 0xE9) {
 					*p = getchar();
 				}
 
 				if (vm.krn->io.direction == KVM_EXIT_IO_OUT && vm.krn->io.port == 0x0278) {
-					FileH &fc = vm.fileh;
+					FileH& fc = vm.fileh;
 
 					if(fc.gather_msg(*p)) {
 						continue;
@@ -245,7 +245,7 @@ int VM::start_vm(VM vm, int i){
 						case FileH::r:
 						{
 
-							std::string data = fc.file_read(vm.id);
+							string data = fc.file_read(vm.id);
 
 							fc.num_bool = true ;
 							fc.return_number = data.size();
